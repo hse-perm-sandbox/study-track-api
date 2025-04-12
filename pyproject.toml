@@ -21,6 +21,8 @@ in-project = true
 start = "src.main:start"
 
 [tool.poetry.dependencies]
+fastapi = "^0.115.12"
+uvicorn = "^0.34.0"
 
 
 [tool.poetry.group.dev.dependencies]
