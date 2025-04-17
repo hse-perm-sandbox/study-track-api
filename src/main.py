@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 
 
-from src.routes.root import router as test_root_router
+from src.routes.users import router as test_root_router
 
 
 def start():
