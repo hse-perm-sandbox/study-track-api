@@ -7,8 +7,8 @@ from src.routes.users import router as test_root_router
 
 def start():
     app = FastAPI(
-        title="ADD APP TITLE...",
-        description="API для ...",
+        title="Study Track",
+        description="Study Track — web-приложение, ориентированное на студентов, с функциями, специально адаптированными под учебный процесс: задачи, категории, приоритеты, напоминания, календарное отображение.",
     )
     app.include_router(router=test_root_router)
 
