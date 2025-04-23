@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Body, Path
 
 
 router = APIRouter(
     prefix="/api/users",
 )
+
+users = [{"name": "Timur", "age": 18, "id": 1}, {"name": "Kox", "age": 23, "id": 2}]
 
 @router.get(
     "/",
@@ -11,41 +13,44 @@ router = APIRouter(
     description="Тестовый endpoint для демонстрации работы API",
     response_description="Возвращает объект с двумя полями: value и description",
 )
-async def get_root():
-    return {"value": "Some test value", "description": "Test value description"}
+async def get_users():
+    return users
 
-def __init__(self):
-    self.name = "NoName"
-    self.email = "NoEmail"
-    self.hash_password = None
-    self.id_user = None
+@router.get(
+    "/{id}",
+    summary="Тестовый endpoint",
+    description="Тестовый endpoint для демонстрации работы API",
+    response_description="Возвращает объект с двумя полями: value и description",
+)
+async def get_user(id: int =Path()):
+    return [x for x in users if x["id"] == id]
 
-def __init__(self, name: str, email: str, hash_password: int, id_user: int):
-    self.name = name
-    self.email = email
-    self.hash_password = hash_password
-    self.id_user = id_user
+@router.delete(
+    "/{id}",
+    summary="Тестовый endpoint",
+    description="Тестовый endpoint для демонстрации работы API",
+    response_description="Возвращает объект с двумя полями: value и description",
+)
+async def delete_user(id: int =Path()):
+    cur = [x for x in users if x["id"] != id]
+    users = cur
 
-def print_user(self):
-    print(f"Name: {self.name}\n",
-          f"Email: {self.email}\n",
-          f"Password's hash: {self.hash_password}\n",
-          f"ID: {self.id_user}\n")
-    
-def get_user(self):
-    return {"Name": self.name, "Email": self.email, "Password's hash": self.hash_password, "ID": self.id_user}
-    
-def delete_user(self):
-    del self
+@router.post(
+    "/",
+    summary="Тестовый endpoint",
+    description="Тестовый endpoint для демонстрации работы API",
+    response_description="Возвращает объект с двумя полями: value и description",
+)
+async def post_user(user_data =Body()):
+    users.append(user_data)
+    return user_data
 
-def update_name(self, name: str):
-    self.name = name
-
-def update_email(self, email: str):
-    self.email = email
-
-def update_hash(self, hash: int):
-    self.hash_password = hash
-
-def update_id(self, id: int):
-    self.id_user = id
+@router.patch(
+    "/{id}",
+    summary="Тестовый endpoint",
+    description="Тестовый endpoint для демонстрации работы API",
+    response_description="Возвращает объект с двумя полями: value и description",
+)
+async def patch_user(id = Path(), user_data =Body()):
+    users.append(user_data)
+    return user_data

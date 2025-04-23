@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 
 
-from src.routes.users import router as test_user_router
+from src.routes.users import router as user_router
 
 
 def start():
@@ -10,7 +10,7 @@ def start():
         title="Study Track",
         description="Study Track — web-приложение, ориентированное на студентов, с функциями, специально адаптированными под учебный процесс: задачи, категории, приоритеты, напоминания, календарное отображение.",
     )
-    app.include_router(router=test_user_router)
+    app.include_router(router=user_router)
 
     uvicorn.run(app, host="127.0.0.1", port=8080)
 
