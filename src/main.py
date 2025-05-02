@@ -6,7 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.routes.users import router as user_router
 
 
-def start():
+def create_app() -> FastAPI:
+    """Создает экземпляр приложения."""
     app = FastAPI(
         title="Study Track",
         description="Study Track — web-приложение, ориентированное на студентов, с функциями, специально адаптированными под учебный процесс: задачи, категории, приоритеты, напоминания, календарное отображение.",
@@ -19,7 +20,12 @@ def start():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    return app
 
+
+def start():
+    """Запускает приложение."""
+    app = create_app()
     uvicorn.run(app, host="127.0.0.1", port=8080)
 
 

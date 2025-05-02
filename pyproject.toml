@@ -19,6 +19,7 @@ in-project = true
 
 [tool.poetry.scripts]
 start = "src.main:start"
+dev = "src.dev:start"
 
 [tool.poetry.dependencies]
 fastapi = "^0.115.12"
