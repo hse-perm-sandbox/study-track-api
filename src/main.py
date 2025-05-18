@@ -2,9 +2,17 @@ from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
+# для бд
+from db.db import create_tables
+
+app = FastAPI()
+
+@app.on_event("startup")
+async def on_startup():
+    await create_tables()
 
 from src.routes.users import router as user_router
-
+# для бд
 
 def create_app() -> FastAPI:
     """Создает экземпляр приложения."""
