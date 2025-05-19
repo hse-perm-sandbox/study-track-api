@@ -1,4 +1,5 @@
 from typing import List, Optional
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.models.user import User
 from src.db.repositories.base import BaseRepository
@@ -30,3 +31,10 @@ class UserRepository(BaseRepository[User]):
         await db.commit()
         await db.refresh(user)
         return UserDto.model_validate(user)
+    
+
+    async def delete(self, db: AsyncSession, user_dto: UserDto) -> None:
+        result = await db.execute(select(User).where(User.id == user_dto.id))
+        user = result.scalar_one_or_none()
+        if user:
+            await super().delete(db, user)

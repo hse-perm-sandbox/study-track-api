@@ -1,74 +1,74 @@
-from fastapi import APIRouter, Body, HTTPException, Path, Response
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Body, HTTPException, Path, Response, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.db import get_db
+from src.db.models.user import User
+from src.db.repositories.user import UserRepository
+from src.schemas.user import UserDto, UserOptional, UserBase
 
 router = APIRouter(
     prefix="/api/users",
 )
 
-last_id = 2
-users = [{"name": "Timur", "age": 18, "id": 1}, {"name": "Kox", "age": 23, "id": 2}]
-
+user_repo = UserRepository()
 
 @router.get(
     "/",
     summary="Получить список пользователей",
     description="Возвращает всех пользователей в системе",
+    response_model=list[UserDto],
 )
-async def get_users():
-    return users
-
+async def get_users(db: AsyncSession = Depends(get_db)):
+    return await user_repo.get_all(db)
 
 @router.get(
     "/{id}",
     summary="Получить пользователя по ID",
     description="Ищет пользователя по указанному ID",
+    response_model=UserDto,
 )
-async def get_user(id: int = Path()):
-    filtered_users = [x for x in users if x["id"] == id]
-    if not filtered_users:
-        raise HTTPException(status_code=404)
-    return filtered_users[0]
-
+async def get_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
+    user = await user_repo.get_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return user
 
 @router.delete(
     "/{id}",
     summary="Удалить пользователя",
     description="Удаляет пользователя по указанному ID",
+    status_code=204,
 )
-async def delete_user(response: Response, id: int = Path()):
-    global users
-    filtered_users = [x for x in users if x["id"] == id]
-    if not filtered_users:
-        raise HTTPException(status_code=404)
-    users = [x for x in users if x["id"] != id]
-    response.status_code = 204
-
+async def delete_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
+    user = await user_repo.get_by_id(db, id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    await user_repo.delete(db, user)
+    return Response(status_code=204)
 
 @router.post(
     "/",
     summary="Создать нового пользователя",
-    description="Добавляет нового пользователя в список",
+    description="Добавляет нового пользователя в базу данных",
+    response_model=UserDto,
+    status_code=201,
 )
-async def post_user(user_data=Body()):
-    global last_id
-    last_id += 1
-    user_data["id"] = last_id
-    users.append(user_data)
-    return JSONResponse(content=user_data, status_code=201)
-
+async def post_user(user_data: UserBase = Body(...), db: AsyncSession = Depends(get_db)):
+    user = User(**user_data.model_dump())
+    return await user_repo.add(db, user)
 
 @router.patch(
     "/{id}",
     summary="Обновить данные пользователя",
     description="Изменяет имя или возраст пользователя по ID",
+    response_model=UserDto,
 )
-async def patch_user(id=Path(), user_data=Body()):
-    filtered_users = [x for x in users if x["id"] == id]
-    if not filtered_users:
-        raise HTTPException(status_code=404)
-    if "name" in user_data:
-        filtered_users[0]["name"] = user_data["name"]
-    if "age" in user_data:
-        filtered_users[0]["age"] = user_data["age"]
-    return filtered_users[0]
+async def patch_user(
+    id: int = Path(),
+    user_data: UserOptional = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await user_repo.update(db, id, user_data)
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return user

@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, model_validator
 
 from src.schemas.base_dto import BaseDto
 
@@ -23,8 +23,8 @@ class UserOptional(BaseModel):
     name: Optional[str] = None
     age: Optional[int] = None
 
-    @field_validator("name", "age", mode="after")
-    def at_least_one_field(cls, v, values):
-        if not (values.get("name") or values.get("age")):
+    @model_validator(mode="after")
+    def at_least_one_field(cls, data):
+        if not (data.name or data.age):
             raise ValueError("Должно быть заполнено хотя бы одно из полей: name или age")
-        return v
+        return data
