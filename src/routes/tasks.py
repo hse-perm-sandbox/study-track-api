@@ -1,94 +1,73 @@
-from fastapi import APIRouter, Body, HTTPException, Path, Response
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Body, HTTPException, Path, Response, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.db import get_db
+from src.db.repositories.task import TaskRepository
+from src.schemas.task import TaskDto, TaskOptional, TaskBase
 
 router = APIRouter(
-    prefix="/api/tasks",
+    prefix="/api/users/{user_id}/tasks",
 )
 
-last_task_id = 2
-tasks = [
-    {
-        "id": 1,
-        "title": "Сделать домашнее задание",
-        "description": "Упражнения по алгебре",
-        "priority": "high",
-        "deadline": "2025-05-20"
-    },
-    {
-        "id": 2,
-        "title": "Подготовить доклад",
-        "description": "История. Тема: Вторая мировая война",
-        "priority": "medium",
-        "deadline": "2025-05-25"
-    }
-]
+task_repo = TaskRepository()
 
-#получить все задачи
+
 @router.get(
     "/",
-    summary="Получить список всех задач",
-    description="Возвращает все задачи системе",
+    summary="Получить список задач пользователя",
+    description="Возвращает все задачи, привязанные к указанному пользователю",
+    response_model=list[TaskDto],
 )
-async def get_tasks():
-    return tasks
+async def get_tasks(user_id: int = Path(), db: AsyncSession = Depends(get_db)):
+    return await task_repo.get_all_by_user(db, user_id)
 
-#получить задачу по id
-@router.get(
-    "/{id}",
-    summary="Получить пользователя по ID",
-    description="Ищет пользователя по указанному ID",
-)
-async def get_task(id: int = Path(...)):
-    task = next((x for x in tasks if x["id"] == id), None)
-    if task is None:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
-    return task
 
-#удалить задачу
-@router.delete(
-    "/{id}",
-    summary="Удалить задачу",
-    description="Удаляет задачу по указанному ID",
-)
-async def delete_task(response: Response, id: int = Path()):
-    global tasks
-    task = next((x for x in tasks if x["id"] == id))
-    if task is None:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
-
-#создать задачу
 @router.post(
     "/",
     summary="Создать новую задачу",
-    description="Добавляет новую задачу в список",
+    description="Добавляет новую задачу для указанного пользователя",
+    response_model=TaskDto,
+    status_code=201,
 )
-async def post_task(task_data=Body()):
-    global last_task_id
-    last_task_id += 1
-    task_data["id"] = last_task_id
+async def post_task(
+    user_id: int = Path(),
+    task_data: TaskBase = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    return await task_repo.add_for_user(db, user_id, task_data)
 
-    task_data.setdefault("priority", "medium")
-    task_data.setdefault("description", "")
-    task_data.setdefault("deadline", "")
 
-    tasks.append(task_data)
-    return JSONResponse(content=task_data, status_code=201)
-
-#обновление задачи 
 @router.patch(
     "/{id}",
-    summary="Обновить данные о задаче",
-    description="Изменяет имя или возраст пользователя по ID",
+    summary="Обновить задачу",
+    description="Изменяет данные задачи по ID",
+    response_model=TaskDto,
 )
-async def patch_task(id: int = Path(), task_data=Body()):
-    task = next((x for x in tasks if x["id"] == id), None)
-    if task is None:
+async def patch_task(
+    user_id: int = Path(),
+    id: int = Path(),
+    task_data: TaskOptional = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    task = await task_repo.update(db, id, task_data)
+    if not task:
         raise HTTPException(status_code=404, detail="Задача не найдена")
-    
-    task["title"] = task_data.get("title", task["title"])
-    task["description"] = task_data.get("description", task["description"])
-    task["priority"] = task_data.get("priority", task["priority"])
-    task["deadline"] = task_data.get("deadline", task["deadline"])
-
     return task
+
+
+@router.delete(
+    "/{id}",
+    summary="Удалить задачу",
+    description="Удаляет задачу по ID",
+    status_code=204,
+)
+async def delete_task(
+    user_id: int = Path(),
+    id: int = Path(),
+    db: AsyncSession = Depends(get_db),
+):
+    task = await task_repo.get_by_id(db, id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+    await task_repo.delete(db, task)
+    return Response(status_code=204)
