@@ -11,3 +11,4 @@ class User(BaseModel):
 
     #связь с задачами 
     tasks = relationship("Task", back_populates="user")
+    categories = relationship("Category", back_populates="category")
