@@ -9,6 +9,7 @@ class Task(BaseModel):
     __tablename__ = "tasks"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    id: Mapped[int]
     title: Mapped[str]
     description: Mapped[str]
     priority: Mapped[str]  
