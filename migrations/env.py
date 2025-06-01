@@ -7,20 +7,23 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from src.db.db import Base
 from src.db.models.base import BaseModel
 from src.db.models.user import User
 from src.db.models.task import Task
-from src.db.models.category import Category
-from src.db.models.notification import Notification
 from src.config import settings
 
 config = context.config
 fileConfig(config.config_file_name)
-target_metadata = BaseModel.metadata
+target_metadata = Base.metadata
 
-def run_migrations_offline() -> None:
+def get_url():
+    return settings.DATABASE_URL
+
+def run_migrations_offline():
+    url = get_url()
     context.configure(
-        url=settings.DATABASE_URL,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -30,7 +33,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-def do_run_migrations(connection: Connection) -> None:
+def do_run_migrations(connection):
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -40,10 +43,11 @@ def do_run_migrations(connection: Connection) -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-async def run_migrations_online() -> None:
+async def run_migrations_online():
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        url=settings.DATABASE_URL,
+        config.get_section(config.config_ini_section),
+        url=get_url(),
+        prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
