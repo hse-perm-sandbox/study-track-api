@@ -2,22 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.db import get_db
-from src.db.models.user import User
+from src.db.repositories.user import UserRepository
 from src.schemas.auth import LoginInput
-from sqlalchemy import select
+from src.services.auth_service import AuthService
 
-router = APIRouter(
-    prefix="/api/auth",
-    tags=["auth"]
-)
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+user_repo = UserRepository()
+
 
 @router.post("/login")
 async def login(data: LoginInput, db: AsyncSession = Depends(get_db)):
-    stmt = select(User).where(User.email == data.email)
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
+    user = await user_repo.get_user_model_by_email(db, data.email)
 
-    if not user or user.password_hash != data.password:
+    if not user or not AuthService.verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
-    return {"token": "fake-jwt-token"}
+    return {
+        "token": AuthService.create_access_token(
+            {"id": user.id, "name": user.name, "email": user.email}
+        )
+    }

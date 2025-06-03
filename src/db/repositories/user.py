@@ -1,9 +1,12 @@
 from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.db.models.user import User
 from src.db.repositories.base import BaseRepository
 from src.schemas.user import UserDto, UserOptional
+
 
 class UserRepository(BaseRepository[User]):
     def __init__(self):
@@ -16,6 +19,10 @@ class UserRepository(BaseRepository[User]):
     async def get_by_id(self, db: AsyncSession, obj_id: int) -> Optional[UserDto]:
         user = await super().get_by_id(db, obj_id)
         return UserDto.model_validate(user) if user else None
+
+    async def get_user_model_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
 
     async def add(self, db: AsyncSession, obj: User) -> UserDto:
         user = await super().add(db, obj)
@@ -31,7 +38,6 @@ class UserRepository(BaseRepository[User]):
         await db.commit()
         await db.refresh(user)
         return UserDto.model_validate(user)
-    
 
     async def delete(self, db: AsyncSession, user_dto: UserDto) -> None:
         result = await db.execute(select(User).where(User.id == user_dto.id))

@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Body, HTTPException, Path, Response, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.db import get_db
 from src.db.models.user import User
 from src.db.repositories.user import UserRepository
-from src.schemas.user import UserDto, UserOptional, UserBase
+from src.schemas.user import UserBase, UserDto, UserOptional
+from src.services.auth_service import AuthService
 
 router = APIRouter(
     prefix="/api/users",
 )
 
 user_repo = UserRepository()
+
 
 @router.get(
     "/",
@@ -20,6 +22,7 @@ user_repo = UserRepository()
 )
 async def get_users(db: AsyncSession = Depends(get_db)):
     return await user_repo.get_all(db)
+
 
 @router.get(
     "/{id}",
@@ -32,6 +35,7 @@ async def get_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     return user
+
 
 @router.delete(
     "/{id}",
@@ -46,6 +50,7 @@ async def delete_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
     await user_repo.delete(db, user)
     return Response(status_code=204)
 
+
 @router.post(
     "/",
     summary="Создать нового пользователя",
@@ -54,8 +59,13 @@ async def delete_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
     status_code=201,
 )
 async def post_user(user_data: UserBase = Body(...), db: AsyncSession = Depends(get_db)):
-    user = User(**user_data.model_dump())
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        password_hash=AuthService.get_password_hash(user_data.password),
+    )
     return await user_repo.add(db, user)
+
 
 @router.patch(
     "/{id}",

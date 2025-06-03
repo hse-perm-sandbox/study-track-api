@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "postgres"
     ECHO_DB_QUERIES: bool = True
     """Если True, то SQLAlchemy будет выводить все SQL-запросы в лог. Полезно для отладки."""
+    SECRET_KEY: str = "secret_key_value"
+    ACCESS_TOKEN_LIFETIME: int = 60 * 60 * 24
+    """Время жизни токена в секундах"""
 
     @property
     def DATABASE_URL(self) -> str:
