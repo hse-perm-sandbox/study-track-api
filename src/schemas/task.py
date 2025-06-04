@@ -1,7 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, model_validator
-
+from pydantic import BaseModel, model_validator, field_validator
 from src.schemas.base_dto import BaseDto
 
 
@@ -12,7 +11,17 @@ class TaskBase(BaseModel):
     description: str
     priority: str
     deadline: datetime
-    category_id: int
+    category_id: Optional[int] = None
+
+    @field_validator("deadline", mode="before")
+    def remove_tz(cls, v):
+        if isinstance(v, str):
+            dt = datetime.fromisoformat(v)
+        elif isinstance(v, datetime):
+            dt = v
+        else:
+            raise ValueError("Invalid deadline format")
+        return dt.replace(tzinfo=None)
 
 
 class TaskDto(BaseDto, TaskBase):
