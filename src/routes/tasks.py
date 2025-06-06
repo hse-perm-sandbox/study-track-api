@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.db import get_db
 from src.db.repositories.task import TaskRepository
 from src.schemas.task import TaskBase, TaskDto, TaskOptional
+from src.db.models.user import User
+from src.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
@@ -28,11 +30,11 @@ async def get_tasks(db: AsyncSession = Depends(get_db)):
     status_code=201,
 )
 async def post_task(
-    user_id: int = Path(),
     task_data: TaskBase = Body(...),
+    current_user: User = Depends(AuthService.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await task_repo.add_for_user(db, user_id, task_data)
+    return await task_repo.add_for_user(db, current_user.id, task_data)
 
 
 @router.patch(
@@ -42,15 +44,15 @@ async def post_task(
     response_model=TaskDto,
 )
 async def patch_task(
-    user_id: int = Path(),
-    id: int = Path(),
+    task_id: int,
     task_data: TaskOptional = Body(...),
+    current_user: User = Depends(AuthService.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    task = await task_repo.update(db, id, task_data)
-    if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
-    return task
+    task = await task_repo.get_by_id(db, task_id)
+    if not task or task.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Задача не найдена или доступ запрещён")
+    return await task_repo.update(db, task_id, task_data)
 
 
 @router.delete(
@@ -59,13 +61,14 @@ async def patch_task(
     description="Удаляет задачу по ID",
     status_code=204,
 )
+
 async def delete_task(
-    user_id: int = Path(),
-    id: int = Path(),
+    task_id: int,
+    current_user: User = Depends(AuthService.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    task = await task_repo.get_by_id(db, id)
-    if not task:
+    task = await task_repo.get_by_id(db, task_id)
+    if not task or task.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Задача не найдена")
     await task_repo.delete(db, task)
     return Response(status_code=204)
