@@ -6,7 +6,7 @@ from src.db.repositories.user import UserRepository
 from src.schemas.auth import LoginInput
 from src.services.auth_service import AuthService
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
 user_repo = UserRepository()
 
 

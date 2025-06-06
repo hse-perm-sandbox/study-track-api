@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Body, HTTPException, Path, Response, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.db import get_db
 from src.db.repositories.task import TaskRepository
-from src.schemas.task import TaskDto, TaskOptional, TaskBase
+from src.schemas.task import TaskBase, TaskDto, TaskOptional
 
-router = APIRouter(
-    prefix="/api/users/{user_id}/tasks",
-)
+router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
 task_repo = TaskRepository()
 
@@ -18,8 +16,8 @@ task_repo = TaskRepository()
     description="Возвращает все задачи, привязанные к указанному пользователю",
     response_model=list[TaskDto],
 )
-async def get_tasks(user_id: int = Path(), db: AsyncSession = Depends(get_db)):
-    return await task_repo.get_all_by_user(db, user_id)
+async def get_tasks(db: AsyncSession = Depends(get_db)):
+    return await task_repo.get_all(db)
 
 
 @router.post(

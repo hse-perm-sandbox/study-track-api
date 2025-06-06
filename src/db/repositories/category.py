@@ -16,6 +16,12 @@ class CategoryRepository(BaseRepository[Category]):
         categories = await super().get_all(db)
         return [CategoryDto.model_validate(category) for category in categories]
 
+    async def get_all_by_user(self, db: AsyncSession, user_id: int) -> List[CategoryDto]:
+        stmt = select(Category).where(Category.user_id == user_id)
+        result = await db.execute(stmt)
+        categories = result.scalars().all()
+        return [CategoryDto.model_validate(category) for category in categories]
+
     async def get_by_id(self, db: AsyncSession, obj_id: int) -> Optional[CategoryDto]:
         category = await super().get_by_id(db, obj_id)
         return CategoryDto.model_validate(category) if category else None
@@ -24,7 +30,9 @@ class CategoryRepository(BaseRepository[Category]):
         category = await super().add(db, obj)
         return CategoryDto.model_validate(category)
 
-    async def update(self, db: AsyncSession, obj_id: int, category_data: CategoryOptional) -> CategoryDto:
+    async def update(
+        self, db: AsyncSession, obj_id: int, category_data: CategoryOptional
+    ) -> CategoryDto:
         category = await super().get_by_id(db, obj_id)
         if not category:
             raise ValueError(f"Категория с ID {obj_id} не найдена")

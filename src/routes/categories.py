@@ -6,9 +6,7 @@ from src.db.models.category import Category
 from src.db.repositories.category import CategoryRepository
 from src.schemas.category import CategoryBase, CategoryDto, CategoryOptional
 
-router = APIRouter(
-    prefix="/api/categories",
-)
+router = APIRouter(prefix="/api/categories", tags=["Categories"])
 
 category_repo = CategoryRepository()
 
@@ -57,7 +55,9 @@ async def delete_category(id: int = Path(), db: AsyncSession = Depends(get_db)):
     response_model=CategoryDto,
     status_code=201,
 )
-async def post_category(category_data: CategoryBase = Body(...), db: AsyncSession = Depends(get_db)):
+async def post_category(
+    category_data: CategoryBase = Body(...), db: AsyncSession = Depends(get_db)
+):
     category = Category(**category_data.dict())
     return await category_repo.add(db, category)
 
