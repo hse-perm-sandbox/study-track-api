@@ -19,6 +19,6 @@ async def login(data: LoginInput, db: AsyncSession = Depends(get_db)):
 
     return {
         "token": AuthService.create_access_token(
-            {"id": user.id, "name": user.name, "email": user.email}
+            {"user_id": user.id, "name": user.name, "email": user.email}
         )
     }
