@@ -7,7 +7,7 @@ from src.db.repositories.category import CategoryRepository
 from src.db.repositories.task import TaskRepository
 from src.db.repositories.user import UserRepository
 from src.schemas.category import CategoryDto
-from src.schemas.task import TaskDto
+from src.schemas.task import TaskDeadlineFilter, TaskDto
 from src.schemas.user import UserBase, UserDto, UserOptional
 from src.services.auth_service import AuthService
 
@@ -47,8 +47,12 @@ async def get_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
     description="Возвращает все задачи, привязанные к указанному пользователю",
     response_model=list[TaskDto],
 )
-async def get_tasks_by_user(id: int = Path(), db: AsyncSession = Depends(get_db)):
-    return await task_repo.get_all_by_user(db, id)
+async def get_tasks_by_user(
+    id: int = Path(),
+    deadline_filter: TaskDeadlineFilter = Depends(),
+    db: AsyncSession = Depends(get_db),
+):
+    return await task_repo.get_all_by_user(db, id, deadline_filter)
 
 
 @router.get(

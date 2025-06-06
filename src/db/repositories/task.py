@@ -1,18 +1,26 @@
 from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.task import Task
 from src.db.repositories.base import BaseRepository
-from src.schemas.task import TaskDto, TaskBase, TaskOptional
+from src.schemas.task import TaskBase, TaskDeadlineFilter, TaskDto, TaskOptional
 
 
 class TaskRepository(BaseRepository[Task]):
     def __init__(self):
         super().__init__(Task)
 
-    async def get_all_by_user(self, db: AsyncSession, user_id: int) -> List[TaskDto]:
+    async def get_all_by_user(
+        self, db: AsyncSession, user_id: int, deadline_filter: TaskDeadlineFilter = None
+    ) -> List[TaskDto]:
         stmt = select(Task).where(Task.user_id == user_id)
+        print(deadline_filter)
+        if deadline_filter.deadline_from:
+            stmt = stmt.where(Task.deadline >= deadline_filter.deadline_from)
+        if deadline_filter.deadline_to:
+            stmt = stmt.where(Task.deadline <= deadline_filter.deadline_to)
         result = await db.execute(stmt)
         tasks = result.scalars().all()
         return [TaskDto.model_validate(task) for task in tasks]

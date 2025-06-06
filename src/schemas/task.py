@@ -1,6 +1,8 @@
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, model_validator, field_validator
+from typing import Optional
+
+from pydantic import BaseModel, field_validator, model_validator
+
 from src.schemas.base_dto import BaseDto
 
 
@@ -41,12 +43,19 @@ class TaskOptional(BaseModel):
 
     @model_validator(mode="after")
     def at_least_one_field(cls, data):
-        if not any([
-            data.title,
-            data.description,
-            data.priority,
-            data.deadline,
-            data.category_id,
-        ]):
+        if not any(
+            [
+                data.title,
+                data.description,
+                data.priority,
+                data.deadline,
+                data.category_id,
+            ]
+        ):
             raise ValueError("Необходимо указать хотя бы одно поле для обновления")
         return data
+
+
+class TaskDeadlineFilter(BaseModel):
+    deadline_from: Optional[datetime] = None
+    deadline_to: Optional[datetime] = None
