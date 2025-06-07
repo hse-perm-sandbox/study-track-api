@@ -12,5 +12,5 @@ class User(BaseModel):
     password_hash: Mapped[str] = mapped_column(String)
 
     # связь с задачами
-    tasks = relationship("Task", back_populates="user")
-    categories = relationship("Category", back_populates="user")
+    tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+    categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")

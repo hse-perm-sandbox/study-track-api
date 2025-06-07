@@ -10,5 +10,5 @@ class Category(BaseModel):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str]
 
-    tasks = relationship("Task", back_populates="category")
+    tasks = relationship("Task", back_populates="category", cascade="all, delete-orphan")
     user = relationship("User", back_populates="categories")

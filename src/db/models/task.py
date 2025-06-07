@@ -20,6 +20,6 @@ class Task(BaseModel):  # наследуемся от base.py
         ForeignKey("categories.id")
     )  # внешний ключ ссылающийся на таблицу categories (колонка id)
 
-    notifications = relationship("Notification", back_populates="task")
+    notifications = relationship("Notification", back_populates="task", cascade="all, delete-orphan")
     user = relationship("User", back_populates="tasks")
     category = relationship("Category", back_populates="tasks")
