@@ -63,11 +63,11 @@ async def patch_task(
 )
 
 async def delete_task(
-    task_id: int,
+    id: int,
     current_user: User = Depends(AuthService.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    task = await task_repo.get_by_id(db, task_id)
+    task = await task_repo.get_by_id(db, id)
     if not task or task.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Задача не найдена")
     await task_repo.delete(db, task)
